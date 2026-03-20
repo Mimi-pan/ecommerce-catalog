@@ -153,6 +153,14 @@ The database is seeded automatically with **5 categories** and **11 products** o
 | PUT    | `/api/v1/products/{id}`                   | **JWT** | Update a product                        |
 | DELETE | `/api/v1/products/{id}`                   | **JWT** | Soft-delete a product (marks inactive)  |
 
+### Cart
+
+| Method | Endpoint                    | Auth    | Description              |
+|--------|-----------------------------|---------|--------------------------|
+| GET    | `/api/v1/cart`              | **JWT** | Get current user's cart  |
+| POST   | `/api/v1/cart/add`          | **JWT** | Add item to cart         |
+| DELETE | `/api/v1/cart/{itemId}`     | **JWT** | Remove item from cart    |
+
 ---
 
 ## Pagination & Sorting
