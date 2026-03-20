@@ -1,6 +1,6 @@
 # E-Commerce Product Catalog API
 
-A RESTful API built with **Java 17** and **Spring Boot 3** for managing an e-commerce product catalog. This project demonstrates clean layered architecture, proper REST design, input validation, and paginated queries — built as a portfolio project for a Java Backend position.
+A RESTful API built with **Java 17** and **Spring Boot 3** for managing an e-commerce product catalog. Demonstrates clean layered architecture, JWT authentication, input validation, paginated queries, and containerization — built as a portfolio project for a Java Backend position.
 
 ---
 
@@ -10,106 +10,150 @@ A RESTful API built with **Java 17** and **Spring Boot 3** for managing an e-com
 |--------------|--------------------------------------|
 | Language     | Java 17                              |
 | Framework    | Spring Boot 3.2                      |
+| Security     | Spring Security 6 + JWT (JJWT 0.12) |
 | Data Access  | Spring Data JPA + Hibernate          |
 | Database     | H2 (dev) / PostgreSQL (prod-ready)   |
 | Validation   | Jakarta Bean Validation              |
+| API Docs     | SpringDoc OpenAPI 3 (Swagger UI)     |
 | Build Tool   | Maven                                |
+| Containers   | Docker + Docker Compose              |
+| CI           | GitHub Actions                       |
 | Utilities    | Lombok                               |
-
----
-
-## Project Structure
-
-```
-src/
-└── main/
-    ├── java/com/portfolio/ecommerce/
-    │   ├── EcommerceApplication.java       # Entry point
-    │   ├── controller/
-    │   │   ├── CategoryController.java     # Category endpoints
-    │   │   └── ProductController.java      # Product endpoints
-    │   ├── model/
-    │   │   ├── Category.java               # Category entity
-    │   │   └── Product.java                # Product entity (@PrePersist/@PreUpdate)
-    │   ├── repository/
-    │   │   ├── CategoryRepository.java     # JPA repository
-    │   │   └── ProductRepository.java      # JPA + JPQL custom queries
-    │   ├── service/
-    │   │   ├── CategoryService.java        # Interface
-    │   │   ├── CategoryServiceImpl.java    # Implementation
-    │   │   ├── ProductService.java         # Interface
-    │   │   └── ProductServiceImpl.java     # Implementation (soft-delete)
-    │   ├── dto/
-    │   │   ├── CategoryDTO.java            # Response DTO
-    │   │   ├── CategoryRequestDTO.java     # Request DTO (validated)
-    │   │   ├── ProductDTO.java             # Response DTO
-    │   │   └── ProductRequestDTO.java      # Request DTO (validated)
-    │   └── exception/
-    │       ├── GlobalExceptionHandler.java # @RestControllerAdvice
-    │       ├── ResourceNotFoundException.java
-    │       ├── BusinessException.java
-    │       └── ErrorResponse.java          # Consistent error format
-    └── resources/
-        ├── application.properties          # Config
-        └── data.sql                        # Seed data (5 categories, 11 products)
-```
 
 ---
 
 ## Getting Started
 
-### Prerequisites
-- Java 17+
-- Maven 3.6+
-
-### Run locally
+### Option 1 — Run locally (requires Java 17 + Maven)
 
 ```bash
-# Clone the repo
 git clone https://github.com/YOUR_USERNAME/ecommerce-catalog.git
 cd ecommerce-catalog
-
-# Run
 ./mvnw spring-boot:run
 ```
 
-The API will start at `http://localhost:8080`.
+### Option 2 — Run with Docker
 
-### H2 Console (database browser)
+```bash
+docker-compose up --build
+```
+
+The API will be available at `http://localhost:8080` either way.
+
+---
+
+## Authentication (JWT)
+
+**GET** endpoints are public — no token needed.
+**POST, PUT, DELETE** endpoints require a valid JWT in the `Authorization` header.
+
+### 1. Register an account
+
+```http
+POST /auth/register
+Content-Type: application/json
+
+{
+  "username": "mimi",
+  "password": "secret123"
+}
+```
+
+### 2. Log in
+
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "username": "mimi",
+  "password": "secret123"
+}
+```
+
+Both return:
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "tokenType": "Bearer",
+  "username": "mimi",
+  "role": "USER"
+}
+```
+
+### 3. Use the token
+
+Include it in the `Authorization` header for all protected requests:
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
+```
+
+---
+
+## Interactive API Docs (Swagger UI)
+
+Open **`http://localhost:8080/swagger-ui.html`** in your browser.
+
+- Click **Authorize** (top right) and paste your JWT token
+- All endpoints are documented with request/response examples
+- Try any endpoint directly in the browser — no Postman needed
+
+Raw OpenAPI JSON: `http://localhost:8080/api-docs`
+
+---
+
+## H2 Database Console (dev only)
+
 Open `http://localhost:8080/h2-console` and connect with:
-- **JDBC URL:** `jdbc:h2:mem:ecommercedb`
-- **Username:** `sa`
-- **Password:** *(leave empty)*
+
+| Field    | Value                              |
+|----------|------------------------------------|
+| JDBC URL | `jdbc:h2:mem:ecommercedb`          |
+| Username | `sa`                               |
+| Password | *(leave empty)*                    |
+
+The database is seeded automatically with **5 categories** and **11 products** on startup.
 
 ---
 
 ## API Endpoints
 
+### Authentication
+
+| Method | Endpoint         | Auth | Description                  |
+|--------|------------------|------|------------------------------|
+| POST   | `/auth/register` | —    | Create a new account         |
+| POST   | `/auth/login`    | —    | Log in and receive JWT token |
+
 ### Categories
 
-| Method | Endpoint                  | Description                          |
-|--------|---------------------------|--------------------------------------|
-| GET    | `/api/v1/categories`      | List all categories                  |
-| GET    | `/api/v1/categories/{id}` | Get category by ID                   |
-| POST   | `/api/v1/categories`      | Create a new category                |
-| PUT    | `/api/v1/categories/{id}` | Update a category                    |
-| DELETE | `/api/v1/categories/{id}` | Delete a category (if no products)   |
+| Method | Endpoint                  | Auth    | Description                          |
+|--------|---------------------------|---------|--------------------------------------|
+| GET    | `/api/v1/categories`      | —       | List all categories (with product count) |
+| GET    | `/api/v1/categories/{id}` | —       | Get category by ID                   |
+| POST   | `/api/v1/categories`      | **JWT** | Create a new category                |
+| PUT    | `/api/v1/categories/{id}` | **JWT** | Update a category                    |
+| DELETE | `/api/v1/categories/{id}` | **JWT** | Delete a category (if no products)   |
 
 ### Products
 
-| Method | Endpoint                              | Description                             |
-|--------|---------------------------------------|-----------------------------------------|
-| GET    | `/api/v1/products`                    | List active products (paginated)        |
-| GET    | `/api/v1/products/{id}`               | Get product by ID                       |
-| GET    | `/api/v1/products/category/{id}`      | Products by category (paginated)        |
-| GET    | `/api/v1/products/search?name=...`    | Search by name (partial, case-insensitive) |
-| GET    | `/api/v1/products/price-range?min=&max=` | Filter by price range               |
-| GET    | `/api/v1/products/in-stock`           | List in-stock products                  |
-| POST   | `/api/v1/products`                    | Create a new product                    |
-| PUT    | `/api/v1/products/{id}`               | Update a product                        |
-| DELETE | `/api/v1/products/{id}`               | Soft-delete a product (marks inactive)  |
+| Method | Endpoint                                  | Auth    | Description                             |
+|--------|-------------------------------------------|---------|-----------------------------------------|
+| GET    | `/api/v1/products`                        | —       | List active products (paginated)        |
+| GET    | `/api/v1/products/{id}`                   | —       | Get product by ID                       |
+| GET    | `/api/v1/products/category/{id}`          | —       | Products by category (paginated)        |
+| GET    | `/api/v1/products/search?name=...`        | —       | Search by name (partial, case-insensitive) |
+| GET    | `/api/v1/products/price-range?min=&max=`  | —       | Filter by price range                   |
+| GET    | `/api/v1/products/in-stock`               | —       | List in-stock products                  |
+| POST   | `/api/v1/products`                        | **JWT** | Create a new product                    |
+| PUT    | `/api/v1/products/{id}`                   | **JWT** | Update a product                        |
+| DELETE | `/api/v1/products/{id}`                   | **JWT** | Soft-delete a product (marks inactive)  |
 
-### Pagination & Sorting
+---
+
+## Pagination & Sorting
 
 ```
 GET /api/v1/products?page=0&size=5&sort=price,asc
@@ -118,38 +162,16 @@ GET /api/v1/products?page=1&size=10&sort=name,desc
 
 ---
 
-## Example Requests
+## Running Tests
 
-### Create a Category
-```http
-POST /api/v1/categories
-Content-Type: application/json
-
-{
-  "name": "Gaming",
-  "description": "Consoles, accessories, and games"
-}
+```bash
+mvn test
 ```
 
-### Create a Product
-```http
-POST /api/v1/products
-Content-Type: application/json
-
-{
-  "name": "Gaming Controller",
-  "description": "Wireless controller with vibration feedback",
-  "price": 59.99,
-  "stockQuantity": 40,
-  "sku": "GAME-001",
-  "categoryId": 1
-}
-```
-
-### Search Products
-```http
-GET /api/v1/products/search?name=keyboard&page=0&size=5
-```
+The test suite includes:
+- **Integration tests** for all controller endpoints (MockMvc + H2)
+- **Unit tests** for the service layer (Mockito, no Spring context)
+- **Smoke test** verifying the full application context loads
 
 ---
 
@@ -185,11 +207,13 @@ Validation errors include a `fieldErrors` map:
 
 ## Key Design Decisions
 
+- **JWT authentication:** Stateless token-based auth — no server-side sessions. The filter validates the token on every request.
 - **Soft delete:** Products are marked `active = false` instead of being physically removed, preserving data integrity.
 - **DTO pattern:** Entities are never exposed directly — request and response DTOs decouple the API contract from the persistence model.
 - **Service interfaces:** Controllers depend on interfaces, not implementations, making the code easily testable and extensible.
 - **Paginated responses:** All list endpoints support `page`, `size`, and `sort` parameters to handle large datasets efficiently.
 - **Consistent error responses:** A single `@RestControllerAdvice` handler produces uniform error JSON for all exception types.
+- **N+1 prevention:** `CategoryServiceImpl` uses `LEFT JOIN FETCH` to load categories and their product counts in a single SQL query.
 
 ---
 
@@ -204,6 +228,7 @@ spring.datasource.password=your_password
 spring.datasource.driver-class-name=org.postgresql.Driver
 spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.hibernate.ddl-auto=update
+spring.h2.console.enabled=false
 ```
 
 And add the PostgreSQL driver to `pom.xml`:
@@ -218,6 +243,52 @@ And add the PostgreSQL driver to `pom.xml`:
 
 ---
 
+## Project Structure
+
+```
+src/
+└── main/
+    ├── java/com/portfolio/ecommerce/
+    │   ├── EcommerceApplication.java
+    │   ├── config/
+    │   │   ├── OpenApiConfig.java          # Swagger + JWT bearer scheme
+    │   │   ├── SecurityConfig.java         # Spring Security + CORS
+    │   │   └── WebConfig.java              # CORS (backup)
+    │   ├── controller/
+    │   │   ├── AuthController.java         # /auth/register, /auth/login
+    │   │   ├── CategoryController.java
+    │   │   └── ProductController.java
+    │   ├── dto/
+    │   │   ├── auth/                       # RegisterRequestDTO, LoginRequestDTO, AuthResponseDTO
+    │   │   ├── CategoryDTO / CategoryRequestDTO
+    │   │   └── ProductDTO / ProductRequestDTO
+    │   ├── model/
+    │   │   ├── Category.java
+    │   │   ├── Product.java                # @PrePersist / @PreUpdate for timestamps
+    │   │   └── User.java                   # USER / ADMIN roles
+    │   ├── repository/
+    │   │   ├── CategoryRepository.java     # findAllWithProducts() — JOIN FETCH
+    │   │   ├── ProductRepository.java      # custom JPQL queries
+    │   │   └── UserRepository.java
+    │   ├── security/
+    │   │   ├── JwtTokenProvider.java       # generate / validate / extract JWT
+    │   │   ├── JwtAuthenticationFilter.java # OncePerRequestFilter
+    │   │   └── UserDetailsServiceImpl.java
+    │   ├── service/
+    │   │   ├── CategoryService / CategoryServiceImpl
+    │   │   └── ProductService / ProductServiceImpl (soft-delete)
+    │   └── exception/
+    │       ├── GlobalExceptionHandler.java  # @RestControllerAdvice
+    │       ├── ResourceNotFoundException.java
+    │       ├── BusinessException.java
+    │       └── ErrorResponse.java
+    └── resources/
+        ├── application.properties
+        └── data.sql                         # 5 categories, 11 products
+```
+
+---
+
 ## Author
 
-Built by **[Your Name]** — portfolio project for Java Backend Junior position.
+Built by **Mimi** — portfolio project for Java Backend Junior position.
