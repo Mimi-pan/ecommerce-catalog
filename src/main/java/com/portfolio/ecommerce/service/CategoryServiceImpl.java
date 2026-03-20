@@ -23,7 +23,8 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public List<CategoryDTO> getAllCategories() {
-        return categoryRepository.findAll()
+        // Uses JOIN FETCH to avoid N+1: loads all categories + their products in one query
+        return categoryRepository.findAllWithProducts()
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
