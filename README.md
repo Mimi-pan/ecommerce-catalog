@@ -266,17 +266,22 @@ src/
     │   │   └── WebConfig.java              # CORS (backup)
     │   ├── controller/
     │   │   ├── AuthController.java         # /auth/register, /auth/login
+    │   │   ├── CartController.java         # /api/v1/cart
     │   │   ├── CategoryController.java
     │   │   └── ProductController.java
     │   ├── dto/
     │   │   ├── auth/                       # RegisterRequestDTO, LoginRequestDTO, AuthResponseDTO
+    │   │   ├── CartItemRequest.java
+    │   │   ├── CartResponse.java
     │   │   ├── CategoryDTO / CategoryRequestDTO
     │   │   └── ProductDTO / ProductRequestDTO
     │   ├── model/
+    │   │   ├── CartItem.java
     │   │   ├── Category.java
     │   │   ├── Product.java                # @PrePersist / @PreUpdate for timestamps
     │   │   └── User.java                   # USER / ADMIN roles
     │   ├── repository/
+    │   │   ├── CartRepository.java
     │   │   ├── CategoryRepository.java     # findAllWithProducts() — JOIN FETCH
     │   │   ├── ProductRepository.java      # custom JPQL queries
     │   │   └── UserRepository.java
@@ -285,6 +290,7 @@ src/
     │   │   ├── JwtAuthenticationFilter.java # OncePerRequestFilter
     │   │   └── UserDetailsServiceImpl.java
     │   ├── service/
+    │   │   ├── CartService / CartServiceImpl
     │   │   ├── CategoryService / CategoryServiceImpl
     │   │   └── ProductService / ProductServiceImpl (soft-delete)
     │   └── exception/
