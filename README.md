@@ -1,4 +1,6 @@
 # E-Commerce Product Catalog API
+![CI](https://github.com/Mimi-pan/ecommerce-catalog/actions/workflows/ci.yml/badge.svg)
+
 
 A RESTful API built with **Java 17** and **Spring Boot 3** for managing an e-commerce product catalog. Demonstrates clean layered architecture, JWT authentication, input validation, paginated queries, and containerization — built as a portfolio project for a Java Backend position.
 
@@ -27,7 +29,7 @@ A RESTful API built with **Java 17** and **Spring Boot 3** for managing an e-com
 ### Option 1 — Run locally (requires Java 17 + Maven)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ecommerce-catalog.git
+git clone https://github.com/Mimi-pan/ecommerce-catalog.git
 cd ecommerce-catalog
 ./mvnw spring-boot:run
 ```
